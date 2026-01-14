@@ -12,16 +12,33 @@ if ($LASTEXITCODE -ne 0) {
 # Install required packages inside the activated venv
 try {
 
-    # upgrade pip to the latest version
-    Write-Host "Checking if pip is installed..." -ForegroundColor Yellow
-    if (Get-Command pip -ErrorAction SilentlyContinue) {
-        Write-Host "pip is already installed." -ForegroundColor Green
+    # Check pip in venv
+    Write-Host "Checking pip in virtual environment..." -ForegroundColor Yellow
+
+    # Get pip path and version
+    $pipPath = python -c "import sys; import os; print(os.path.join(sys.prefix, 'Scripts', 'pip.exe'))" 2>&1
+
+    if (Test-Path $pipPath) {
+        Write-Host "pip is installed in venv at: $pipPath" -ForegroundColor Green
+
+        # Get pip version
+        $pipVersion = & $pipPath --version 2>&1
+        Write-Host "pip version: $pipVersion" -ForegroundColor Green
     } else {
-        # install pip
-        Write-Host "pip is not installed. Installing pip..." -ForegroundColor Yellow
+        # install pip using ensurepip
+        Write-Host "pip is not found in venv. Installing pip..." -ForegroundColor Yellow
         python -m ensurepip --upgrade
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to install pip"
+        }
+
+        # Verify installation
+        if (Test-Path $pipPath) {
+            $pipVersion = & $pipPath --version 2>&1
+            Write-Host "pip installed successfully at: $pipPath" -ForegroundColor Green
+            Write-Host "pip version: $pipVersion" -ForegroundColor Green
+        } else {
+            throw "pip installation completed but executable not found"
         }
     }
 
@@ -76,10 +93,10 @@ try {
     if ($playwrightInstalled) {
         Write-Host "Playwright found. Installing Playwright browsers..." -ForegroundColor Yellow
 
-        try {
-            # Set environment variable to bypass SSL certificate issues in corporate environments
-            $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
+        # Set environment variable to bypass SSL certificate issues in corporate environments
+        $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
+        try {
             # Install Playwright browsers
             python -m playwright install --with-deps 2>&1 | Out-Null
 
@@ -91,6 +108,7 @@ try {
         }
         catch {
             Write-Host "Warning: Could not install Playwright browsers: $_" -ForegroundColor Yellow
+            Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Yellow
             Write-Host "You may need to run 'python -m playwright install' manually later." -ForegroundColor Yellow
         }
         finally {
@@ -104,20 +122,13 @@ try {
 catch {
     Write-Host "An error occurred during setup: $_" -ForegroundColor Red
     Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
-
-    # Deactivate even on error
-    if (Get-Command deactivate -ErrorAction SilentlyContinue) {
-        Write-Host "Deactivating virtual environment due to error..." -ForegroundColor Yellow
-        deactivate
-    }
     exit 1
 }
 finally {
     # Deactivate if still active
     if (Get-Command deactivate -ErrorAction SilentlyContinue) {
-        Write-Host "Deactivating virtual environment ..." -ForegroundColor Yellow
+        Write-Host "Deactivating virtual environment..." -ForegroundColor Yellow
         deactivate
-        Write-Host "Deactivated virtual environment." -ForegroundColor DarkGray
     }
 }
 

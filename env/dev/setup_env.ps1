@@ -48,6 +48,7 @@ function Install-ScoopPackage {
         catch {
             $attempt++
             Write-Host "Attempt $attempt failed: $_" -ForegroundColor Red
+            Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
             if ($attempt -lt $MaxRetries) {
                 Write-Host "Retrying..." -ForegroundColor Yellow
                 Start-Sleep -Seconds 2
@@ -158,7 +159,6 @@ if ($buckets -match "versions") {
 # check if python of scoop is installed
 $scooppython = "$env:USERPROFILE\scoop\apps\$pythonVersion\current\python.exe"
 $pythonInstalled = Install-ScoopPackage -PackageName $pythonVersion -ExecutablePath $scooppython
-
 if (-not $pythonInstalled) {
     Write-Host "Failed to install Python. Exiting..." -ForegroundColor Red
     exit 1

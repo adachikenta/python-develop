@@ -10,6 +10,9 @@ cd /d "%~dp0"
 powershell -ExecutionPolicy Bypass -NoLogo -File .\env\dev\run_tests_internal.ps1
 if %ERRORLEVEL% NEQ 0 (goto :catch)
 
+powershell -ExecutionPolicy Bypass -NoLogo -File .\env\dev\report_coverage.ps1 "Internal"
+if %ERRORLEVEL% NEQ 0 (goto :catch)
+
 :catch
 :finally
 set EXIT_CODE=%ERRORLEVEL%

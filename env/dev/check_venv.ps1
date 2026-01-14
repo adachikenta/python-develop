@@ -74,11 +74,13 @@ if (-not $venvExists) {
     exit 1
 }
 
+# Only proceed to activation if we reach here (venv exists)
 # If ActivateVenv flag is set, activate and verify version
 if ($ActivateVenv) {
     Write-Host "Activating virtual environment..." -ForegroundColor Yellow
     try {
-        . $venvPath\Scripts\Activate.ps1
+        $activateScript = Join-Path $venvPath "Scripts\Activate.ps1"
+        . $activateScript
         Write-Host "Virtual environment activated." -ForegroundColor Green
 
         $versionOk = Test-VenvPythonVersion

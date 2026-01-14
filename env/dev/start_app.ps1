@@ -1,3 +1,7 @@
+param(
+    [string]$PythonScript = ".\app.py"
+)
+
 $ErrorActionPreference = "Stop"
 
 $checkVenvScript = Join-Path $PSScriptRoot "check_venv.ps1"
@@ -9,25 +13,23 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Check if Python script path is provided as argument
-if ($args.Count -eq 0) {
-    Write-Host "Error: No Python script path provided." -ForegroundColor Red
-    Write-Host "Usage: .\start_app.ps1 <python_script_path>" -ForegroundColor Yellow
-    exit 1
+# Display which script will be executed
+if ($PythonScript -eq ".\app.py") {
+    Write-Host "No Python script specified, using default: $PythonScript" -ForegroundColor Cyan
+} else {
+    Write-Host "Using Python script: $PythonScript" -ForegroundColor Cyan
 }
 
-$pythonScript = $args[0]
-
 # Verify the Python script exists
-if (-not (Test-Path $pythonScript)) {
-    Write-Host "Error: Python script not found: $pythonScript" -ForegroundColor Red
+if (-not (Test-Path $PythonScript)) {
+    Write-Host "Error: Python script not found: $PythonScript" -ForegroundColor Red
     exit 1
 }
 
 # Run the application
 try {
-    Write-Host "Starting Python script: $pythonScript" -ForegroundColor Green
-    python $pythonScript
+    Write-Host "Starting Python script: $PythonScript" -ForegroundColor Green
+    python $PythonScript
     $appResult = $LASTEXITCODE
 } catch {
     Write-Host "Error: $_" -ForegroundColor Red
@@ -40,7 +42,9 @@ try {
 
     if ($appResult -eq 0) {
         Write-Host "Python script completed successfully!" -ForegroundColor Green
+        exit 0
     } else {
         Write-Host "Python script exited with errors. Exit code: $appResult" -ForegroundColor Red
+        exit $appResult
     }
 }
