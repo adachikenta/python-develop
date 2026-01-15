@@ -7,7 +7,7 @@ set LAUNCHMODE=%errorlevel%
 setlocal
 cd /d "%~dp0"
 
-start /wait powershell -ExecutionPolicy Bypass -NoLogo -File .\env\dev\start_app.ps1 ".\app.py"
+powershell -ExecutionPolicy Bypass -NoLogo -File .\env\dev\start_app.ps1 ".\app.py"
 if %ERRORLEVEL% NEQ 0 (goto :catch)
 
 :catch
